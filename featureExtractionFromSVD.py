@@ -41,31 +41,32 @@ def _opensmileExtractionFeature(smileConfiguration:int, filesPath:str, metadataP
     healthy = meta['Healthy'].tolist()
     sex = meta['Sex'].tolist()
     age = meta['Age'].tolist()
+    subject = meta['Subject'].tolist()
+    subject_unique = []
 
-    for dirname, _, filenames in os.walk(path):
-        for filename in filenames:
-            file = os.path.join(dirname, filename)
-            x = file.replace(path, "")
-            id = x.replace("-"+fileSufix+".wav", "")
-            id = id.replace("\\", "")
-            #print(id)
-            placeId = ids.index(int(id))
-            if sexConfiguration !='all':
-                if sex[placeId]== sexConfiguration:
-                    if __ageFilter(age[placeId],minAge,maxAge):
-                        signal, sampling_rate = audiofile.read(file,duration=1,always_2d=True)
-                        result_df = smile.process_signal(signal,sampling_rate)
-                        result_df['age'] = age[placeId]
-                        result_df['healthy'] = 0 if healthy[placeId]=="n" else 1
-                        df = pd.concat([df, pd.DataFrame(result_df)], axis=0)
-            else:
-                if __ageFilter(age[placeId],minAge,maxAge):
-                    signal, sampling_rate = audiofile.read(file,duration=1,always_2d=True)
-                    result_df = smile.process_signal(signal,sampling_rate)
-                    result_df['age'] = age[placeId]
-                    result_df['sex'] = 0 if sex[placeId]=="m" else 1
-                    result_df['healthy'] = 0 if healthy[placeId]=="n" else 1
-                    df = pd.concat([df, pd.DataFrame(result_df)], axis=0)
+    for idx in ids:
+            file = os.path.join(filesPath, str(idx)+"-"+fileSufix+".wav")
+            if(os.path.isfile(file)):
+                placeId = ids.index(int(idx))
+                if  subject[placeId] in subject_unique != True:
+                    if sexConfiguration !='all':
+                        if sex[placeId]== sexConfiguration:
+                            if __ageFilter(age[placeId],minAge,maxAge):
+                                signal, sampling_rate = audiofile.read(file,duration=1,always_2d=True)
+                                result_df = smile.process_signal(signal,sampling_rate)
+                                result_df['age'] = age[placeId]
+                                result_df['healthy'] = 0 if healthy[placeId]=="n" else 1
+                                df = pd.concat([df, pd.DataFrame(result_df)], axis=0)
+                    else:
+                        if __ageFilter(age[placeId],minAge,maxAge):
+                            signal, sampling_rate = audiofile.read(file,duration=1,always_2d=True)
+                            result_df = smile.process_signal(signal,sampling_rate)
+                            result_df['age'] = age[placeId]
+                            result_df['sex'] = 0 if sex[placeId]=="m" else 1
+                            result_df['healthy'] = 0 if healthy[placeId]=="n" else 1
+                            df = pd.concat([df, pd.DataFrame(result_df)], axis=0)
+                subject_unique.append(subject[placeId])
+    print(subject_unique)
     name = "Data_"+fileSufix+"-"+sexConfiguration+"-"+str(minAge)+"-"+str(maxAge)
     #print("DATASET: "+name+" has "+ df.loc[:, 'healthy'].tolist().size()+" records")
     #print("DATASET: "+name+" has "+ df.loc[:, 'healthy'].tolist().count(0)+" healthy and "+df.loc[:, 'healthy'].tolist().count(1)+" pathological")
@@ -201,6 +202,54 @@ def _spectrogramCreation(filesPath:str, metadataPath:str, fileSufix:str, outputP
         plt = __createSpectrogram(wave_file)
         plt.savefig(outputPath+"/women/"+id+".jpg") if sex[placeId]=="m" else plt.savefig(outputPath+"/men/"+id+".jpg")
         plt.close()
+
+def _printReportDataset(women_healthy,women_pathological,men_healthy, men_pathological,name):
+    # Creating dataset
+    size = 2
+    cars = ['healthy', 'pathological']
+    
+    data = np.array([[women_healthy,women_pathological], [men_healthy, men_pathological]])
+    
+    # normalizing data to 2 pi
+    norm = data / np.sum(data)*2 * np.pi
+    
+    # obtaining ordinates of bar edges
+    left = np.cumsum(np.append(0,norm.flatten()[:-1])).reshape(data.shape)
+    
+    # Creating color scale
+    cmap = plt.get_cmap("tab20c")
+    outer_colors = cmap(np.arange(2)*4)
+    inner_colors = cmap(np.array([1, 2, 5, 6]))
+    
+    # Creating plot
+    fig, ax = plt.subplots(figsize =(10, 7),
+                        subplot_kw = dict(polar = True))
+    
+    ax.bar(x = left[:, 0],
+        width = norm.sum(axis = 1),
+        bottom = 1-size,
+        height = size,
+        color = outer_colors,
+        edgecolor ='w',
+        linewidth = 1,
+        align ="edge")
+
+    ax.bar(x = left.flatten(),
+        width = norm.flatten(),
+        bottom = 1-2 * size,
+        height = size,
+        color = inner_colors,
+        edgecolor ='w',
+        linewidth = 1,
+        align ="edge")
+
+    ax.set(title =name)
+    ax.set_axis_off()
+
+    # show plot
+    plt.show()
+    
+
 
 # PRIVATE
 
