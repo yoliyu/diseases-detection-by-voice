@@ -57,8 +57,8 @@ def _plotDatasetReport(women_healthy,women_pathological,men_healthy, men_patholo
     
     # Creating color scale
     cmap = plt.get_cmap("tab20c")
-    outer_colors = cmap(np.arange(2)*4)
-    inner_colors = cmap(np.array([1, 2, 5, 6]))
+    outer_colors = cmap(np.array([13,16]))
+    inner_colors = cmap(np.array([14, 15, 18, 19]))
     
     # Creating plot
     fig, ax = plt.subplots(figsize =(10, 7),

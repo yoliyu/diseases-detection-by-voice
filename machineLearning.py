@@ -20,9 +20,9 @@ import io
 
 def _trainModel(X,y,foldsNumber:int, model,standarized:bool,dimensionReduction:str,dimensionReductionComponents):
    
-    actual_classes, predicted_classes, _, avg,pre,f1,recall = __crossKStratifiedValidation(model, foldsNumber, X, y,standarized,dimensionReduction,dimensionReductionComponents)
+    actual_classes, predicted_classes, _, avg,pre,f1,recall,spec = __crossKStratifiedValidation(model, foldsNumber, X, y,standarized,dimensionReduction,dimensionReductionComponents)
     plot = __plotConfusionMatrix(actual_classes, predicted_classes, [0, 1])
-    return avg,pre,f1,recall,plot
+    return avg,pre,f1,recall,spec,plot
 
 
 def _printMostImportantFeatureOfComponent(model,initial_feature_names):
@@ -63,6 +63,7 @@ def __crossKStratifiedValidation(model, k, X, y,standarized,dimensionReduction, 
     pre_score = []
     f_score = []
     r_score = []
+    spec_score = []
     no_classes = len(np.unique(y))
     actual_classes = np.empty([0], dtype=int)
     predicted_classes = np.empty([0], dtype=int)
@@ -98,20 +99,24 @@ def __crossKStratifiedValidation(model, k, X, y,standarized,dimensionReduction, 
     
     
         model_.fit(train_X, train_y)
-        pred_values = model_.predict(test_X).round()
+        pred_values = model_.predict(test_X)
         acc = accuracy_score(list(pred_values), list(test_y))
         pre = precision_score(list(pred_values), list(test_y))
         f1 = f1_score(list(pred_values), list(test_y))
         r = recall_score(list(pred_values), list(test_y))
+        spec = recall_score(list(pred_values), list(test_y), pos_label=0)
         acc_score.append(acc)
         pre_score.append(pre)
         f_score.append(f1)
         r_score.append(r)
+        spec_score.append(spec)
         predicted_classes = np.append(predicted_classes, pred_values)
         avg_acc_score = sum(acc_score)/k
         avg_pre_score = sum (pre_score)/k
         avg_f1_score = sum (f_score)/k
         avg_recall_score = sum(r_score)/k
+        avg_spec_score = sum(spec_score)/k
+
 
         try:
             predicted_proba = np.append(predicted_proba, model_.predict_proba(test_X), axis=0)
@@ -124,12 +129,14 @@ def __crossKStratifiedValidation(model, k, X, y,standarized,dimensionReduction, 
     print('Avg recall : {}'.format(avg_recall_score))
     print('Avg f1 : {}'.format(avg_f1_score))
 
-    return actual_classes, predicted_classes, predicted_proba, avg_acc_score, avg_pre_score, avg_f1_score, avg_recall_score
+    return actual_classes, predicted_classes, predicted_proba, avg_acc_score, avg_pre_score, avg_f1_score, avg_recall_score,avg_spec_score
 
 # Imprime la matriz confusión
 def __plotConfusionMatrix(actual_classes : np.array, predicted_classes : np.array, sorted_labels : list):
 
     matrix = confusion_matrix(actual_classes, predicted_classes, labels=sorted_labels)
+   
+
     
     plt.figure(figsize=(12.8,6))
     sns.heatmap(matrix, annot=True, xticklabels=sorted_labels, yticklabels=sorted_labels, cmap="Blues", fmt="g")

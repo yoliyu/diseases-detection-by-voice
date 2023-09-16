@@ -33,7 +33,6 @@ def _opensmileExtractionFeature(smileConfiguration:int, filesPath:str, metadataP
     )
 
     df = pd.DataFrame()
-    path = filesPath
     meta = pd.read_excel(metadataPath, sheet_name='SVD')
     ids = meta['ID'].tolist()
     healthy = meta['Healthy'].tolist()
@@ -46,25 +45,28 @@ def _opensmileExtractionFeature(smileConfiguration:int, filesPath:str, metadataP
             file = os.path.join(filesPath, str(idx)+"-"+fileSufix+".wav")
             if(os.path.isfile(file)):
                 placeId = ids.index(int(idx))
-                if  subject[placeId] in subject_unique != True:
-                    if sexConfiguration !='all':
-                        if sex[placeId]== sexConfiguration:
+                if _isNormalAndPathologicalSubjects(meta,subject[placeId]) == False:
+                    if  (subject[placeId] in subject_unique) == False:
+                        if sexConfiguration !='all':
+                            if sex[placeId]== sexConfiguration:
+                                if featureExtraction._ageFilter(age[placeId],minAge,maxAge):
+                                    signal, sampling_rate = audiofile.read(file,duration=1,always_2d=True)
+                                    result_df = smile.process_signal(signal,sampling_rate)
+                                    result_df['age'] = age[placeId]
+                                    result_df['healthy'] = 0 if healthy[placeId]=="n" else 1
+                                    df = pd.concat([df, pd.DataFrame(result_df)], axis=0)
+                                    subject_unique.append(subject[placeId])
+                        else:
                             if featureExtraction._ageFilter(age[placeId],minAge,maxAge):
                                 signal, sampling_rate = audiofile.read(file,duration=1,always_2d=True)
                                 result_df = smile.process_signal(signal,sampling_rate)
                                 result_df['age'] = age[placeId]
+                                result_df['sex'] = 0 if sex[placeId]=="m" else 1
                                 result_df['healthy'] = 0 if healthy[placeId]=="n" else 1
                                 df = pd.concat([df, pd.DataFrame(result_df)], axis=0)
-                    else:
-                        if featureExtraction._ageFilter(age[placeId],minAge,maxAge):
-                            signal, sampling_rate = audiofile.read(file,duration=1,always_2d=True)
-                            result_df = smile.process_signal(signal,sampling_rate)
-                            result_df['age'] = age[placeId]
-                            result_df['sex'] = 0 if sex[placeId]=="m" else 1
-                            result_df['healthy'] = 0 if healthy[placeId]=="n" else 1
-                            df = pd.concat([df, pd.DataFrame(result_df)], axis=0)
-                subject_unique.append(subject[placeId])
-    print(subject_unique)
+                                subject_unique.append(subject[placeId])
+
+
     name = "Data_"+fileSufix+"-"+sexConfiguration+"-"+str(minAge)+"-"+str(maxAge)
     #print("DATASET: "+name+" has "+ df.loc[:, 'healthy'].tolist().size()+" records")
     #print("DATASET: "+name+" has "+ df.loc[:, 'healthy'].tolist().count(0)+" healthy and "+df.loc[:, 'healthy'].tolist().count(1)+" pathological")
@@ -73,6 +75,17 @@ def _opensmileExtractionFeature(smileConfiguration:int, filesPath:str, metadataP
     features_dataframe_no_nan = df.dropna(axis=0 , how='any')
     features_dataframe_no_nan.to_csv(name+".csv", index=False)
 
+def _isNormalAndPathologicalSubjects(dataframe:pd.DataFrame, subject:int):
+    list = []
+    assertion = False
+    for i in range(len(dataframe[dataframe['Subject'] == subject])):
+        list.append(dataframe[dataframe['Subject'] == subject].iloc[i]['Healthy'])
+    values = np.unique(list)
+
+    if len(values) == 2:
+         assertion = True
+    return assertion
+        
 
 # Crea un dataset con duration, meanF0, stdevF0, meanHNR, stdevHNR, localJitter, localabsoluteJitter, 
 # rapJitter, ppq5Jitter, ddpJitter, localShimmer, localdbShimmer, apq3Shimmer, aqpq5Shimmer, apq11Shimmer, ddaShimmer
@@ -121,7 +134,6 @@ def _regularExtractionFeature(start: int, end:int, timeStep:int, unit:str, files
         x = wave_file.replace(filesPath, "")
         id = x.replace("-"+fileSufix+".wav", "")
         id = id.replace("\\", "")
-        print(id)
         placeId = ids.index(int(id))
         age_list.append(age[placeId])
         sex_list.append(0 if sex[placeId]=="m" else 1)
