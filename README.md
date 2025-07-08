@@ -2,7 +2,7 @@
 ## PURPOSE
 Classification of diseases by voice with artificial intelligence.
 
-## WORK DONE THROUGH THIS CODE
+## WORK DONE WITH THIS CODE
 
 - [Transform4Europe Symposium 2023 Poster](https://github.com/yoliyu/diseases-detection-by-voice/blob/master/Poster-Transform4EuropeSymposium2023.pdf)
 - [Biomedical Engineering Society Annual Congress 2023 Poster](https://github.com/yoliyu/diseases-detection-by-voice/blob/master/Poster-BiomedicalEngineeringSocietyAnnualCongress2023.pdf)
