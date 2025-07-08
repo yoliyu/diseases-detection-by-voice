@@ -19,7 +19,7 @@ import featureExtraction
 # metadataPath: path donde están los metadatos
 # fileSufix: sufijo de los ficheros que se van a recorrer en 01-phrase.wav, sería "phrase"
 # sexConfiguration: 'm', 'w' or 'all' para todos los sexos
-def _opensmileExtractionFeature(smileConfiguration:int, filesPath:str, metadataPath:str, fileSufix:str, sexConfiguration:str, minAge:int, maxAge:int, fromSec:int, toSec:int):
+def _opensmileExtractionFeature(smileConfiguration:int, filesPath:str, metadataPath:str, fileSufix:str, sexConfiguration:str, minAge:int, maxAge:int):
     if smileConfiguration == 1:
         smile = opensmile.Smile(
         feature_set=opensmile.FeatureSet.ComParE_2016,
@@ -41,17 +41,17 @@ def _opensmileExtractionFeature(smileConfiguration:int, filesPath:str, metadataP
     subject_unique = []
 
     for idx in ids:
-            file = os.path.join(filesPath, str(idx)+"/"+str(idx)+fileSufix+".wav")
+            file = os.path.join(filesPath, str(idx)+fileSufix+".wav")
             print(filesPath, str(idx)+"/"+str(idx)+fileSufix+".wav")
             if(os.path.isfile(file)):
                 placeId = ids.index(idx)
                 if sexConfiguration !='all':
                     if sex[placeId]== sexConfiguration:
                         if featureExtraction._ageFilter(age[placeId],minAge,maxAge):
-                            signal, sampling_rate = audiofile.read(file,offset = fromSec, duration=toSec,always_2d=True)
+                            signal, sampling_rate = audiofile.read(file,duration=1,always_2d=True)
                             result_df = smile.process_signal(signal,sampling_rate)
                             result_df['age'] = age[placeId]
-                            result_df['healthy'] = 0 if healthy[placeId]=="0" else 1
+                            result_df['healthy'] = 0 if healthy[placeId]==0 else 1
                             df = pd.concat([df, pd.DataFrame(result_df)], axis=0)
                 else:
                     if featureExtraction._ageFilter(age[placeId],minAge,maxAge):
