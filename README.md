@@ -9,5 +9,6 @@ Classification of diseases by voice with artificial intelligence.
 
 - [Biomedical Engineering Society Annual Congress 2023 Poster](https://github.com/yoliyu/diseases-detection-by-voice/blob/master/Poster-BiomedicalEngineeringSocietyAnnualCongress2023.pdf)
 - [Biomedical Engineering Society Annual Congress 2023 Communication](https://github.com/yoliyu/diseases-detection-by-voice/blob/master/Communication-BiomedicalEngineeringSocietyAnnualCongress2023.pdf)
+<img width="1089" alt="image" src="https://github.com/user-attachments/assets/157149d9-ea9f-4eb5-8032-ccbe1910afd9" />
 
 
